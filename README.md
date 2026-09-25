@@ -180,9 +180,11 @@ adb shell am start -a action -e key value
 
 - `com.aistra.hail.action.UNFREEZE`: Unfreeze target app. `key="package"` `value="com.package.name"`
 
-- `com.aistra.hail.action.FREEZE_TAG`: Freeze all non-whitelisted apps in the target tag. `key="tag"` `value="Tag name"`
+- `com.aistra.hail.action.FREEZE_TAG`: Freeze all non-whitelisted apps in the target tag. `key="tag"` `value="Tag name"`.
+  An optional one-shot mode override is supported: `key="mode"` `value="dhizuku_suspend"` (must be a working mode other than default).
 
-- `com.aistra.hail.action.UNFREEZE_TAG`: Unfreeze all apps in the target tag. `key="tag"` `value="Tag name"`
+- `com.aistra.hail.action.UNFREEZE_TAG`: Unfreeze all apps in the target tag. `key="tag"` `value="Tag name"`.
+  An optional one-shot mode override is supported (same `key="mode"` rule as above).
 
 - `com.aistra.hail.action.FREEZE_ALL`: Freeze all apps at Home. `extra` is not necessary.
 
@@ -206,7 +208,11 @@ or use following `schema`:
 
 - `hail://freeze_tag?tag=xxx`
 
+- `hail://freeze_tag?tag=xxx&mode=xxx` (one-shot mode override)
+
 - `hail://unfreeze_tag?tag=xxx`
+
+- `hail://unfreeze_tag?tag=xxx&mode=xxx` (one-shot mode override)
 
 - `hail://freeze_all`
 
@@ -219,6 +225,16 @@ or use following `schema`:
 - `hail://lock`
 
 - `hail://lock_freeze`
+
+### Per-tag working mode (fork extension)
+
+Each tag can have its own working mode (Settings > Per-tag working mode); unset tags follow the global working mode.
+`FREEZE_TAG`, the Home FAB and the `freeze_current` menu use the tag's mode, launching an app unfreezes it with its
+own tag's mode, and multi-select acts per app. Single-app actions, `FREEZE_ALL` and auto freeze still use the global
+working mode.
+
+Known limitation: unfreezing only ever uses the specified mode (no cross-mode fallback), so `UNFREEZE_ALL` or a
+global `LAUNCH` cannot unfreeze apps frozen with another tag's mode — unfreeze them via their own tag instead.
 
 ## Help Translate
 

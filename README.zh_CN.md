@@ -171,9 +171,11 @@ adb shell am start -a action -e key value
 
 - `com.aistra.hail.action.UNFREEZE`：解冻目标应用。`key="package"` `value="com.package.name"`
 
-- `com.aistra.hail.action.FREEZE_TAG`：冻结目标标签中的全部非白名单应用。`key="tag"` `value="标签名"`
+- `com.aistra.hail.action.FREEZE_TAG`：冻结目标标签中的全部非白名单应用。`key="tag"` `value="标签名"`。
+  支持可选的一次性模式覆盖：`key="mode"` `value="dhizuku_suspend"`（须为除 default 外的工作模式）。
 
-- `com.aistra.hail.action.UNFREEZE_TAG`：解冻目标标签中的全部应用。`key="tag"` `value="标签名"`
+- `com.aistra.hail.action.UNFREEZE_TAG`：解冻目标标签中的全部应用。`key="tag"` `value="标签名"`。
+  同样支持一次性模式覆盖（`key="mode"` 规则同上）。
 
 - `com.aistra.hail.action.FREEZE_ALL`：冻结首页全部应用。无需`extra`。
 
@@ -197,7 +199,11 @@ adb shell am start -a action -e key value
 
 - `hail://freeze_tag?tag=xxx`
 
+- `hail://freeze_tag?tag=xxx&mode=xxx`（一次性模式覆盖）
+
 - `hail://unfreeze_tag?tag=xxx`
+
+- `hail://unfreeze_tag?tag=xxx&mode=xxx`（一次性模式覆盖）
 
 - `hail://freeze_all`
 
@@ -210,6 +216,15 @@ adb shell am start -a action -e key value
 - `hail://lock`
 
 - `hail://lock_freeze`
+
+### 分组冻结模式（fork 扩展）
+
+每个分组可在「设置 > 分组冻结模式」中配置独立的工作模式；未设置的分组跟随全局工作模式。
+`FREEZE_TAG`、首页 FAB、「冻结当前分组」菜单按分组模式执行，启动应用时按其所属分组模式解冻，
+多选操作逐个按所属分组执行。单应用操作、`FREEZE_ALL` 与自动冻结仍使用全局工作模式。
+
+已知限制：解冻只走指定模式（无跨模式兜底），因此 `UNFREEZE_ALL` 或全局 `LAUNCH` 解不开别组模式冻结的
+应用——请通过其所属分组解冻。
 
 ## 协助翻译
 

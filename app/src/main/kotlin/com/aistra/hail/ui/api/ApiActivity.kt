@@ -30,6 +30,7 @@ import com.aistra.hail.app.AppInfo
 import com.aistra.hail.app.AppManager
 import com.aistra.hail.app.HailApi
 import com.aistra.hail.app.HailData
+import com.aistra.hail.app.TagInfo
 import com.aistra.hail.ui.theme.AppTheme
 import com.aistra.hail.utils.*
 import com.aistra.hail.work.HWork.setAutoFreeze
@@ -51,15 +52,26 @@ class ApiActivity : ComponentActivity() {
 
             Intent.ACTION_VIEW -> return handleSchema(intent.data)
 
-            HailApi.ACTION_LAUNCH -> launchApp(requirePackage, runCatching { requireTagId }.getOrNull())
+            HailApi.ACTION_LAUNCH -> launchApp(requirePackage, runCatching { requireTag }.getOrNull())
             HailApi.ACTION_FREEZE -> setAppFrozen(requirePackage, true)
             HailApi.ACTION_UNFREEZE -> setAppFrozen(requirePackage, false)
-            HailApi.ACTION_FREEZE_TAG -> setListFrozen(
-                true, HailData.checkedList.filter { requireTagId in it.tagIdList }, true
-            )
+            HailApi.ACTION_FREEZE_TAG -> {
+                val tag = requireTag
+                val mode = requireModeOverride ?: tag.resolveMode()
+                setListFrozen(
+                    true, HailData.checkedList.filter { tag.id in it.tagIdList }, true,
+                    modeFor = { mode }
+                )
+            }
 
-            HailApi.ACTION_UNFREEZE_TAG -> setListFrozen(
-                false, HailData.checkedList.filter { requireTagId in it.tagIdList })
+            HailApi.ACTION_UNFREEZE_TAG -> {
+                val tag = requireTag
+                val mode = requireModeOverride ?: tag.resolveMode()
+                setListFrozen(
+                    false, HailData.checkedList.filter { tag.id in it.tagIdList },
+                    modeFor = { mode }
+                )
+            }
 
             HailApi.ACTION_FREEZE_ALL -> setListFrozen(true)
             HailApi.ACTION_UNFREEZE_ALL -> setListFrozen(false)
@@ -80,6 +92,8 @@ class ApiActivity : ComponentActivity() {
      * hail://unfreeze?package=xxx
      * hail://freeze_tag?tag=xxx
      * hail://unfreeze_tag?tag=xxx
+     * (freeze_tag/unfreeze_tag also accept an optional mode query for one-shot override,
+     * e.g. hail://freeze_tag?tag=xxx&mode=dhizuku_suspend)
      * hail://freeze_all
      * hail://unfreeze_all
      * hail://freeze_non_whitelisted
@@ -177,21 +191,40 @@ class ApiActivity : ComponentActivity() {
             HPackages.getApplicationInfoOrNull(it) ?: throw NameNotFoundException(getString(R.string.app_not_installed))
         } ?: throw IllegalArgumentException("Package must not be null")
 
-    private val requireTagId: Int
+    private val requireTag: TagInfo
         get() = intent.run {
             if (action == Intent.ACTION_VIEW) data?.getQueryParameter(HailData.KEY_TAG)
             else getStringExtra(HailData.KEY_TAG)
         }?.let {
-            HailData.tags.find { tag -> tag.first == it }?.second
+            HailData.tags.find { tag -> tag.name == it }
                 ?: throw IllegalStateException("Tag unavailable:\n$it")
         } ?: throw IllegalArgumentException("Tag must not be null")
 
-    private fun launchApp(pkg: String, tagId: Int? = null) {
-        if (tagId != null) setListFrozen(false, HailData.checkedList.filter { tagId in it.tagIdList })
-        if (AppManager.isAppFrozen(pkg) && AppManager.setAppFrozen(pkg, false)) {
+    /**
+     * FREEZE_TAG / UNFREEZE_TAG 的一次性模式覆盖（intent extra 或 schema query 的 mode 参数）。
+     * 缺省时跟随分组配置；取值必须为工作模式之一（不含 default），否则抛错。
+     */
+    private val requireModeOverride: String?
+        get() = intent.run {
+            if (action == Intent.ACTION_VIEW) data?.getQueryParameter(HailData.KEY_MODE)
+            else getStringExtra(HailData.KEY_MODE)
+        }?.let {
+            if (it in HailData.WORKING_MODE_VALUES && it != HailData.MODE_DEFAULT) it
+            else throw IllegalArgumentException("Mode unavailable:\n$it")
+        }
+
+    private fun launchApp(pkg: String, tag: TagInfo? = null) {
+        if (tag != null) {
+            val mode = requireModeOverride ?: tag.resolveMode()
+            setListFrozen(
+                false, HailData.checkedList.filter { tag.id in it.tagIdList },
+                modeFor = { mode }
+            )
+        }
+        if (AppManager.isAppFrozen(pkg) && AppManager.setAppFrozen(pkg, false, HailData.modeForApp(pkg))) {
             app.setAutoFreezeService()
         }
-        if (HailData.workingMode == HailData.MODE_ISLAND_HIDE) {
+        if (HailData.modeForApp(pkg) == HailData.MODE_ISLAND_HIDE) {
             HIsland.ensureLaunchIntentExists(packageName)
         }
         packageManager.getLaunchIntentForPackage(pkg)?.let {
@@ -200,10 +233,10 @@ class ApiActivity : ComponentActivity() {
         } ?: throw ActivityNotFoundException(getString(R.string.activity_not_found))
     }
 
-    private fun setAppFrozen(pkg: String, frozen: Boolean) = when {
+    private fun setAppFrozen(pkg: String, frozen: Boolean, mode: String = HailData.workingMode) = when {
         frozen && !HailData.isChecked(pkg) -> throw SecurityException("Package not checked")
         AppManager.isAppFrozen(pkg) != frozen && !AppManager.setAppFrozen(
-            pkg, frozen
+            pkg, frozen, mode
         ) -> throw IllegalStateException(getString(R.string.permission_denied))
 
         else -> {
@@ -216,11 +249,14 @@ class ApiActivity : ComponentActivity() {
     }
 
     private fun setListFrozen(
-        frozen: Boolean, list: List<AppInfo> = HailData.checkedList, skipWhitelisted: Boolean = false
+        frozen: Boolean,
+        list: List<AppInfo> = HailData.checkedList,
+        skipWhitelisted: Boolean = false,
+        modeFor: (AppInfo) -> String = { HailData.workingMode }
     ) {
         val filtered =
             list.filter { AppManager.isAppFrozen(it.packageName) != frozen && !(skipWhitelisted && it.whitelisted) }
-        when (val result = AppManager.setListFrozen(frozen, *filtered.toTypedArray())) {
+        when (val result = AppManager.setListFrozen(frozen, *filtered.toTypedArray(), modeFor = modeFor)) {
             null -> throw IllegalStateException(getString(R.string.permission_denied))
             else -> {
                 HUI.showToast(

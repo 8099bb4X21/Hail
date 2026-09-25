@@ -149,6 +149,9 @@
     <string name="app_theme">应用主题</string>
     <string name="follow_system">跟随系统</string>
     <string name="working_mode_tag">相关应用的工作模式</string>
+    <string name="tag_working_mode">分组冻结模式</string>
+    <string name="tag_working_mode_summary">为每个分组设置独立的冻结模式；未设置的分组跟随全局工作模式</string>
+    <string name="follow_global">跟随全局</string>
     <string name="state_running">正在运行</string>
     <string name="state_disabled">已停用</string>
     <string name="state_hidden">已隐藏</string>

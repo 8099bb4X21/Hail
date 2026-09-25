@@ -43,5 +43,7 @@ object HailApi {
 
     fun Intent.addTag(tag: String) = putExtra(HailData.KEY_TAG, tag)
 
+    fun Intent.addMode(mode: String) = putExtra(HailData.KEY_MODE, mode)
+
     fun getIntentForTag(action: String, tag: String) = Intent(action).addTag(tag)
 }

@@ -26,6 +26,7 @@ object HailData {
     const val VERSION = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
     private const val KEY_ID = "id"
     const val KEY_TAG = "tag"
+    const val KEY_MODE = "mode"
     private const val KEY_TAGS = "tags"
     private const val KEY_PINNED = "pinned"
     private const val KEY_WHITELISTED = "whitelisted"
@@ -208,15 +209,21 @@ object HailData {
         })
     }
 
-    val tags: MutableList<Pair<String, Int>> by lazy {
-        mutableListOf<Pair<String, Int>>().apply {
+    val tags: MutableList<TagInfo> by lazy {
+        mutableListOf<TagInfo>().apply {
             runCatching {
                 val json = JSONArray(HFiles.read(tagsPath))
                 for (i in 0 until json.length()) {
-                    add(with(json.getJSONObject(i)) { getString(KEY_TAG) to getInt(KEY_ID) })
+                    add(with(json.getJSONObject(i)) {
+                        TagInfo(
+                            name = getString(KEY_TAG),
+                            id = getInt(KEY_ID),
+                            mode = optString(KEY_MODE, null)?.ifEmpty { null }
+                        )
+                    })
                 }
             }.onFailure {
-                add(app.getString(R.string.label_default) to 0)
+                add(TagInfo(app.getString(R.string.label_default), 0))
             }
         }
     }
@@ -225,11 +232,27 @@ object HailData {
         if (!HFiles.exists(dir)) HFiles.createDirectories(dir)
         HFiles.write(tagsPath, JSONArray().run {
             tags.forEach {
-                put(JSONObject().put(KEY_TAG, it.first).put(KEY_ID, it.second))
+                put(JSONObject().put(KEY_TAG, it.name).put(KEY_ID, it.id).apply {
+                    it.mode?.let { mode -> put(KEY_MODE, mode) }
+                })
             }
             toString()
         })
     }
+
+    /**
+     * 按 tagId 列表解析实际冻结模式：优先第一个带独立配置的非默认分组，
+     * 其次默认分组的配置，都没有则跟随全局工作模式。
+     */
+    fun resolveMode(tagIdList: List<Int>): String {
+        val byId = tags.associateBy { it.id }
+        tagIdList.filter { it != 0 }.forEach { byId[it]?.mode?.let { mode -> return mode } }
+        tagIdList.forEach { byId[it]?.mode?.let { mode -> return mode } }
+        return workingMode
+    }
+
+    fun modeForApp(packageName: String): String =
+        checkedList.find { it.packageName == packageName }?.let { resolveMode(it.tagIdList) } ?: workingMode
 
     fun changeAppsSort(sort: String) = sp.edit { putString(SORT_BY, sort) }
 
