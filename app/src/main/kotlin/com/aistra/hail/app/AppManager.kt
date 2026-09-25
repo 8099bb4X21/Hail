@@ -1,10 +1,14 @@
 package com.aistra.hail.app
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import com.aistra.hail.BuildConfig
 import com.aistra.hail.utils.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import rikka.shizuku.Shizuku
 
 object AppManager {
     val lockScreen: Boolean
@@ -53,8 +57,9 @@ object AppManager {
         return if (denied && i == 0) null else if (i == 1) name else i.toString()
     }
 
-    fun setAppFrozen(packageName: String, frozen: Boolean, mode: String = HailData.workingMode): Boolean =
-        packageName != BuildConfig.APPLICATION_ID && when (mode) {
+    fun setAppFrozen(packageName: String, frozen: Boolean, mode: String = HailData.workingMode): Boolean {
+        if (packageName == BuildConfig.APPLICATION_ID) return false
+        val result = when (mode) {
             HailData.MODE_OWNER_HIDE -> HPolicy.setAppHidden(packageName, frozen)
             HailData.MODE_OWNER_SUSPEND -> HPolicy.setAppSuspended(packageName, frozen)
             HailData.MODE_DHIZUKU_HIDE -> HDhizuku.setAppHidden(packageName, frozen)
@@ -73,6 +78,30 @@ object AppManager {
             HailData.MODE_PRIVAPP_DISABLE -> HPackages.setAppDisabled(packageName, frozen)
             else -> false
         }
+        if (result && frozen) killAppQuietly(packageName, mode)
+        return result
+    }
+
+    private val hasSu by lazy { HShell.checkSU }
+
+    /**
+     * 冻结成功后静默补杀进程。fire-and-forget：结果不计入成功数、不弹任何提示。
+     * 通道顺序：Dhizuku（仅 dhizuku_* 模式）→ Shizuku → ROOT；stop 类（本来就是杀）与 Island 跳过。
+     */
+    private fun killAppQuietly(packageName: String, mode: String) {
+        if (mode.endsWith(HailData.STOP) || mode.startsWith(HailData.ISLAND)) return
+        CoroutineScope(Dispatchers.IO).launch {
+            if (mode.startsWith(HailData.DHIZUKU)
+                && runCatching { HDhizuku.forceStopApp(packageName) }.getOrDefault(false)
+            ) return@launch
+            if (runCatching {
+                    Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+                        && HShizuku.forceStopApp(packageName)
+                }.getOrDefault(false)
+            ) return@launch
+            runCatching { if (hasSu) HShell.forceStopApp(packageName) }
+        }
+    }
 
     fun uninstallApp(packageName: String): Boolean {
         when {
