@@ -447,7 +447,7 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
         modeFor: (AppInfo) -> String = { HailData.workingMode }
     ) {
         val filtered = list.filter { AppManager.isAppFrozen(it.packageName) != frozen }
-        if (filtered.none { modeFor(it) != HailData.MODE_DEFAULT }) {
+        if (filtered.isNotEmpty() && filtered.none { modeFor(it) != HailData.MODE_DEFAULT }) {
             MaterialAlertDialogBuilder(activity).setMessage(R.string.msg_guide)
                 .setPositiveButton(android.R.string.ok, null).show()
             return

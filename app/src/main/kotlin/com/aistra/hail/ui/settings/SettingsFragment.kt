@@ -442,12 +442,15 @@ class SettingsFragment : MainFragment(), MenuProvider {
         HailData.saveTags()
     }
 
+    private fun modeEntry(mode: String): String? {
+        val index = HailData.WORKING_MODE_VALUES.indexOf(mode)
+        return if (index >= 0) resources.getStringArray(R.array.working_mode_entries)[index] else null
+    }
+
     private fun showTagModeDialog() {
-        val allEntries = resources.getStringArray(R.array.working_mode_entries)
         MaterialAlertDialogBuilder(requireActivity()).setTitle(R.string.tag_working_mode)
             .setItems(HailData.tags.map { tag ->
-                tag.name + " — " + (tag.mode?.let { allEntries[HailData.WORKING_MODE_VALUES.indexOf(it)] }
-                    ?: getString(R.string.follow_global))
+                tag.name + " — " + (tag.mode?.let(::modeEntry) ?: getString(R.string.follow_global))
             }.toTypedArray()) { _, index ->
                 showTagModePicker(HailData.tags[index].id)
             }.setNegativeButton(android.R.string.cancel, null).show()
