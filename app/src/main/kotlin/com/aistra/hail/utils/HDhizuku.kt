@@ -57,7 +57,13 @@ object HDhizuku {
     fun forceStopApp(packageName: String): Boolean = runCatching {
         Dhizuku.newProcess(
             arrayOf("am", "force-stop", "--user", HPackages.myUserId.toString(), packageName), null, null
-        ).run { waitFor() == 0 }.also { destroy() }
+        ).let { process ->
+            try {
+                process.waitFor() == 0
+            } finally {
+                process.destroy()
+            }
+        }
     }.getOrDefault(false)
 
     @SuppressLint("PrivateApi")
