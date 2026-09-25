@@ -229,12 +229,13 @@ or use following `schema`:
 ### Per-tag working mode (fork extension)
 
 Each tag can have its own working mode (Settings > Per-tag working mode); unset tags follow the global working mode.
-`FREEZE_TAG`, the Home FAB and the `freeze_current` menu use the tag's mode, launching an app unfreezes it with its
-own tag's mode, and multi-select acts per app. Single-app actions, `FREEZE_ALL` and auto freeze still use the global
-working mode.
+All freeze/unfreeze entry points (single-app actions, `FREEZE_TAG`, `FREEZE_ALL` / `UNFREEZE_ALL`, the Home FAB and
+menus, multi-select, auto freeze, deferred tasks, launching) resolve the mode per app from its tags; the global
+working mode is only the fallback for tags without an explicit mode.
 
-Known limitation: unfreezing only ever uses the specified mode (no cross-mode fallback), so `UNFREEZE_ALL` or a
-global `LAUNCH` cannot unfreeze apps frozen with another tag's mode — unfreeze them via their own tag instead.
+Known limitation: unfreezing only ever uses the specified mode (no cross-mode fallback), so apps frozen via a
+one-shot `mode` override that matches neither their tag mode nor the global mode must be unfrozen with the same
+override.
 
 ## Help Translate
 

@@ -444,7 +444,7 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
         frozen: Boolean,
         list: List<AppInfo> = HailData.checkedList,
         updateList: Boolean = true,
-        modeFor: (AppInfo) -> String = { HailData.workingMode }
+        modeFor: (AppInfo) -> String = { HailData.resolveMode(it.tagIdList) }
     ) {
         val filtered = list.filter { AppManager.isAppFrozen(it.packageName) != frozen }
         if (filtered.isNotEmpty() && filtered.none { modeFor(it) != HailData.MODE_DEFAULT }) {

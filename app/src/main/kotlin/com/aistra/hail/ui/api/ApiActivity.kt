@@ -233,7 +233,9 @@ class ApiActivity : ComponentActivity() {
         } ?: throw ActivityNotFoundException(getString(R.string.activity_not_found))
     }
 
-    private fun setAppFrozen(pkg: String, frozen: Boolean, mode: String = HailData.workingMode) = when {
+    private fun setAppFrozen(
+        pkg: String, frozen: Boolean, mode: String = HailData.modeForApp(pkg)
+    ) = when {
         frozen && !HailData.isChecked(pkg) -> throw SecurityException("Package not checked")
         AppManager.isAppFrozen(pkg) != frozen && !AppManager.setAppFrozen(
             pkg, frozen, mode
@@ -252,7 +254,7 @@ class ApiActivity : ComponentActivity() {
         frozen: Boolean,
         list: List<AppInfo> = HailData.checkedList,
         skipWhitelisted: Boolean = false,
-        modeFor: (AppInfo) -> String = { HailData.workingMode }
+        modeFor: (AppInfo) -> String = { HailData.resolveMode(it.tagIdList) }
     ) {
         val filtered =
             list.filter { AppManager.isAppFrozen(it.packageName) != frozen && !(skipWhitelisted && it.whitelisted) }
