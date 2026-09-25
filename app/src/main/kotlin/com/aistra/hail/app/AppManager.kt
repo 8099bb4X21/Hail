@@ -16,11 +16,22 @@ object AppManager {
             else -> false
         }
 
-    fun isAppFrozen(packageName: String): Boolean =
-        HPackages.isAppStopped(packageName)
-                || HPackages.isAppDisabled(packageName)
+    /**
+     * 按该应用实际使用的模式判定（分组独立模式优先，否则全局），与官方各模式语义对齐：
+     * 只查对应模式的 flag，避免系统侧 stopped 等状态污染显示与过滤。
+     */
+    fun isAppFrozen(packageName: String): Boolean {
+        val mode = HailData.modeForApp(packageName)
+        return when {
+            mode.endsWith(HailData.STOP) -> HPackages.isAppStopped(packageName)
+            mode.endsWith(HailData.DISABLE) -> HPackages.isAppDisabled(packageName)
+            mode.endsWith(HailData.HIDE) -> HPackages.isAppHidden(packageName)
+            mode.endsWith(HailData.SUSPEND) -> HPackages.isAppSuspended(packageName)
+            else -> HPackages.isAppDisabled(packageName)
                 || HPackages.isAppHidden(packageName)
                 || HPackages.isAppSuspended(packageName)
+        }
+    }
 
     fun setListFrozen(
         frozen: Boolean, vararg appInfo: AppInfo, modeFor: (AppInfo) -> String = { HailData.workingMode }
