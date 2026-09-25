@@ -86,14 +86,13 @@ object AppManager {
 
     /**
      * 冻结成功后静默补杀进程。fire-and-forget：结果不计入成功数、不弹任何提示。
-     * 通道顺序：Dhizuku（仅 dhizuku_* 模式）→ Shizuku → ROOT；stop 类（本来就是杀）与 Island 跳过。
+     * 通道顺序：Shizuku → ROOT；stop 类（本来就是杀）与 Island 跳过。
+     * Dhizuku 通道已实测无效（其 newProcess 以 Dhizuku 自身 uid 运行，无 FORCE_STOP_PACKAGES，
+     * logcat 均为 Permission Denial），故不经过 Dhizuku。
      */
     private fun killAppQuietly(packageName: String, mode: String) {
         if (mode.endsWith(HailData.STOP) || mode.startsWith(HailData.ISLAND)) return
         CoroutineScope(Dispatchers.IO).launch {
-            if (mode.startsWith(HailData.DHIZUKU)
-                && runCatching { HDhizuku.forceStopApp(packageName) }.getOrDefault(false)
-            ) return@launch
             if (runCatching {
                     Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
                         && HShizuku.forceStopApp(packageName)

@@ -51,21 +51,6 @@ object HDhizuku {
         ).invoke(dpm, null, arrayOf(packageName), suspended) as Array<*>).isEmpty()
     }.getOrDefault(false)
 
-    /**
-     * 以 Dhizuku 服务端身份执行 am force-stop。静默调用，失败返回 false（调用方忽略结果）。
-     */
-    fun forceStopApp(packageName: String): Boolean = runCatching {
-        Dhizuku.newProcess(
-            arrayOf("am", "force-stop", "--user", HPackages.myUserId.toString(), packageName), null, null
-        ).let { process ->
-            try {
-                process.waitFor() == 0
-            } finally {
-                process.destroy()
-            }
-        }
-    }.getOrDefault(false)
-
     @SuppressLint("PrivateApi")
     fun uninstallApp(packageName: String): Boolean = runCatching {
         val installer = app.packageManager.packageInstaller

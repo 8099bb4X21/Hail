@@ -158,4 +158,54 @@
     <string name="state_suspended">已暂停</string>
     <string name="state_uninstalled">已卸载</string>
     <string name="donate_kofi">Ko-fi</string>
+
+    <string name="title_configuration">配置管理</string>
+    <string name="action_configuration_reset">重置</string>
+    <string name="action_configuration_restore">恢复</string>
+    <string name="action_configuration_save">备份</string>
+    <string name="msg_configuration_restored">配置恢复成功</string>
+    <string name="msg_configuration_saved">配置备份已保存</string>
+    <string name="msg_configuration_save_failed">配置备份保存失败</string>
+    <string name="msg_configuration_reset_confirm">这将把全部 Hail 配置重置为初始状态，不会改变应用实际状态。继续吗？</string>
+    <string name="msg_configuration_reset_success">Hail 配置重置成功</string>
+    <string name="backup_warning_hail_version">该备份由不同版本的 Hail 创建，配置行为可能存在差异。</string>
+    <string name="backup_warning_android_version">该备份创建于不同的 Android 版本，包管理行为可能存在差异。</string>
+    <string name="backup_warning_working_mode_change">存在已冻结应用时把工作模式从 %1$s 改为 %2$s：%3$s</string>
+    <string name="backup_detail_device">设备：%s</string>
+    <string name="backup_detail_created_utc">创建：%s</string>
+    <string name="backup_detail_created_local">本地：%s</string>
+    <string name="backup_detail_hail_version">Hail 版本：%s</string>
+    <string name="backup_detail_android_sdk">Android SDK：%d</string>
+    <string name="backup_detail_working_mode">工作模式：%s</string>
+    <string name="backup_detail_applications">应用数：%d</string>
+    <string name="backup_detail_tags">分组数：%d</string>
+    <string name="msg_configuration_restore_replace">恢复将替换当前全部 Hail 配置。</string>
+    <string name="msg_configuration_backup_unsupported_format">不支持的备份格式：%1$d</string>
+    <string name="msg_configuration_backup_unsupported_configuration_version">不支持的配置版本：%1$s</string>
+    <string name="msg_configuration_backup_unsupported_working_mode">不支持的工作模式：%1$s</string>
+    <string name="msg_configuration_backup_invalid_preferences">偏好数据无效</string>
+    <string name="msg_configuration_backup_application_count_mismatch">应用数量不符：元数据=%1$d，数据=%2$d</string>
+    <string name="msg_configuration_backup_application_missing_package">应用条目 %1$d 缺少包名</string>
+    <string name="msg_configuration_backup_application_duplicate_package">应用包名重复：%1$s</string>
+    <string name="msg_configuration_backup_application_invalid_pinned">应用条目 %1$d 的 pinned 值无效</string>
+    <string name="msg_configuration_backup_application_invalid_whitelisted">应用条目 %1$d 的 whitelisted 值无效</string>
+    <string name="msg_configuration_backup_application_invalid_tag_id">应用条目 %1$d 在索引 %2$d 处的分组 ID 无效</string>
+    <string name="msg_configuration_backup_application_unknown_tag_id">应用条目 %1$d 引用了不存在的分组 ID %2$d</string>
+    <string name="msg_configuration_backup_application_invalid_legacy_tag_id">应用条目 %1$d 的旧版分组 ID 无效</string>
+    <string name="msg_configuration_backup_invalid_application_data">应用数据无效</string>
+    <string name="msg_configuration_backup_tag_count_mismatch">分组数量不符：元数据=%1$d，数据=%2$d</string>
+    <string name="msg_configuration_backup_tag_incomplete">分组条目 %1$d 不完整</string>
+    <string name="msg_configuration_backup_tag_invalid_id">分组条目 %1$d 的 ID 无效</string>
+    <string name="msg_configuration_backup_duplicate_tag_id">分组 ID 重复：%1$d</string>
+    <string name="msg_configuration_backup_tag_invalid_mode">分组条目 %1$d 的工作模式无效：%2$s</string>
+    <string name="msg_configuration_backup_invalid_tag_data">分组数据无效</string>
+    <string name="msg_configuration_backup_archive_entry_too_large">备份条目过大：%1$s（最大 %2$d 字节）</string>
+    <string name="msg_configuration_backup_archive_duplicate_entry">备份中存在重复条目：%1$s</string>
+    <string name="msg_configuration_backup_archive_missing_entry">备份缺少必需条目：%1$s</string>
+    <string name="msg_configuration_backup_unsupported_preference_value">偏好中存在不支持的值：%1$s</string>
+    <string name="msg_configuration_backup_unsupported_preference_type">偏好 %1$s 的类型 %2$s 不支持</string>
+    <string name="msg_configuration_backup_invalid_metadata">备份元数据无效。</string>
+    <string name="msg_configuration_backup_invalid_preference_entry">偏好 \'%s\' 的条目无效。</string>
+    <string name="msg_configuration_backup_missing_preference_value">偏好 \'%s\' 缺少值。</string>
+    <string name="msg_configuration_backup_invalid_preference_value">偏好 \'%s\' 的值与类型 \'%s\' 不符。</string>
 </resources>

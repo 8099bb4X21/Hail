@@ -2,6 +2,7 @@ package com.aistra.hail.ui.settings
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.*
@@ -38,6 +39,10 @@ import com.aistra.hail.R
 import com.aistra.hail.app.AppManager
 import com.aistra.hail.app.HailApi
 import com.aistra.hail.app.HailData
+import com.aistra.hail.backup.HBackupArchive
+import com.aistra.hail.backup.HBackupConstants
+import com.aistra.hail.backup.HBackupManager
+import com.aistra.hail.backup.HBackupValidator
 import com.aistra.hail.databinding.DialogInputBinding
 import com.aistra.hail.ui.main.MainActivity
 import com.aistra.hail.ui.main.MainFragment
@@ -56,6 +61,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.zhanghai.compose.preference.*
 import rikka.shizuku.Shizuku
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class SettingsFragment : MainFragment(), MenuProvider {
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -269,6 +277,39 @@ class SettingsFragment : MainFragment(), MenuProvider {
                 title = { Text(text = stringResource(R.string.action_clear_dynamic_shortcuts)) },
                 icon = { Icon(imageVector = Icons.Outlined.CleaningServices, contentDescription = null) },
                 onClick = ::resetDynamicShortcuts
+            )
+            horizontalDivider()
+            preferenceCategory(key = "configuration", title = { Text(text = stringResource(R.string.title_configuration)) })
+            preference(
+                key = "configuration_save",
+                title = { Text(text = stringResource(R.string.action_configuration_save)) },
+                icon = { Icon(imageVector = Icons.Outlined.Save, contentDescription = null) },
+                onClick = { saveConfigurationLauncher.launch(configurationBackupFileName()) }
+            )
+            preference(
+                key = "configuration_restore",
+                title = { Text(text = stringResource(R.string.action_configuration_restore)) },
+                icon = { Icon(imageVector = Icons.Outlined.Restore, contentDescription = null) },
+                onClick = { restoreConfigurationLauncher.launch(arrayOf("application/octet-stream", "application/zip")) }
+            )
+            preference(
+                key = "configuration_reset",
+                title = { Text(text = stringResource(R.string.action_configuration_reset)) },
+                icon = { Icon(imageVector = Icons.Outlined.RestartAlt, contentDescription = null) },
+                onClick = {
+                    MaterialAlertDialogBuilder(requireActivity())
+                        .setTitle(R.string.action_configuration_reset)
+                        .setMessage(R.string.msg_configuration_reset_confirm)
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
+                            HailData.resetConfiguration()
+                            app.setAppTheme(HailData.appTheme)
+                            HUI.showToast(R.string.msg_configuration_reset_success)
+                            // Return back to Home screen to refresh settings
+                            parentFragmentManager.popBackStack()
+                        }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                }
             )
         }
     }
@@ -490,6 +531,289 @@ class SettingsFragment : MainFragment(), MenuProvider {
                     dialog.dismiss()
                 }
             }.setNegativeButton(android.R.string.cancel, null).show()
+    }
+
+    private val saveConfigurationLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+            if (uri == null) return@registerForActivityResult
+            lifecycleScope.launch {
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        requireContext().contentResolver.openOutputStream(uri)?.use { output ->
+                            HBackupManager.save(output = output, deviceName = configurationDeviceName())
+                        } ?: throw IllegalStateException("Unable to open backup file")
+                    }
+                }.onSuccess {
+                    HUI.showToast(R.string.msg_configuration_saved)
+                }.onFailure {
+                    HLog.e(it)
+                    HUI.showToast(R.string.msg_configuration_save_failed)
+                }
+            }
+        }
+
+    private val restoreConfigurationLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) {
+                lifecycleScope.launch {
+                    runCatching {
+                        requireContext().contentResolver.openInputStream(uri)?.use {
+                            val contents = HBackupManager.read(it)
+                            val validation = HBackupValidator.validate(contents)
+                            if (!validation.valid) {
+                                throw HBackupValidator.BackupValidationException(validation.errors)
+                            }
+                            contents to validation
+                        } ?: throw IllegalStateException("Unable to open backup file")
+                    }.onSuccess { (contents, validation) ->
+                        showRestoreConfirmation(contents, validation)
+                    }.onFailure {
+                        showRestoreFailure(it)
+                    }
+                }
+            }
+        }
+
+    private fun showRestoreConfirmation(
+        contents: HBackupArchive.Contents,
+        validation: HBackupValidator.Result
+    ) {
+        val metadata = contents.metadata
+        val hailVersionChanged = metadata.hailVersion != HailData.VERSION
+        val androidVersionChanged = metadata.androidSdk != Build.VERSION.SDK_INT
+        val createdLocal = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }.parse(metadata.createdUtc)!!
+        )
+        val message = buildString {
+            appendLine(getString(R.string.backup_detail_device, metadata.deviceName))
+            appendLine(getString(R.string.backup_detail_created_utc, metadata.createdUtc))
+            appendLine(getString(R.string.backup_detail_created_local, createdLocal))
+            appendLine(getString(R.string.backup_detail_hail_version, metadata.hailVersion))
+            appendLine(getString(R.string.backup_detail_android_sdk, metadata.androidSdk))
+            appendLine(getString(R.string.backup_detail_working_mode, workingModeLabel(metadata.workingMode)))
+            appendLine(getString(R.string.backup_detail_applications, metadata.applicationCount))
+            append(getString(R.string.backup_detail_tags, metadata.tagCount))
+            if (hailVersionChanged) {
+                append("\n\n")
+                append(getString(R.string.backup_warning_hail_version))
+            }
+            if (androidVersionChanged) {
+                append("\n\n")
+                append(getString(R.string.backup_warning_android_version))
+            }
+            if (validation.warnings.isNotEmpty()) {
+                append("\n\n")
+                append(validation.warnings.joinToString("\n\n") { warning ->
+                    when (warning) {
+                        is HBackupValidator.BackupValidationWarning.WorkingModeChangeWithFrozenApps -> getString(
+                            R.string.backup_warning_working_mode_change,
+                            workingModeLabel(warning.currentMode),
+                            workingModeLabel(warning.backupMode),
+                            warning.frozenAppNames.joinToString(", ")
+                        )
+                    }
+                })
+            }
+            append("\n\n")
+            append(getString(R.string.msg_configuration_restore_replace))
+        }
+        MaterialAlertDialogBuilder(requireActivity())
+            .setTitle(R.string.action_configuration_restore)
+            .setMessage(message)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                lifecycleScope.launch {
+                    runCatching {
+                        HBackupManager.restore(contents)
+                        app.setAppTheme(HailData.appTheme)
+                    }.onSuccess {
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                        HUI.showToast(R.string.msg_configuration_restored)
+                    }.onFailure {
+                        showRestoreFailure(it)
+                    }
+                }
+            }
+            .show()
+    }
+
+    private fun formatBackupArchiveError(error: HBackupArchive.BackupArchiveError): String {
+        return when (error) {
+            is HBackupArchive.BackupArchiveError.EntryTooLarge -> getString(
+                R.string.msg_configuration_backup_archive_entry_too_large, error.entryName, error.maxSize
+            )
+
+            is HBackupArchive.BackupArchiveError.DuplicateEntry -> getString(
+                R.string.msg_configuration_backup_archive_duplicate_entry, error.entryName
+            )
+
+            is HBackupArchive.BackupArchiveError.MissingEntry -> getString(
+                R.string.msg_configuration_backup_archive_missing_entry, error.entryName
+            )
+
+            is HBackupArchive.BackupArchiveError.InvalidMetadata -> getString(
+                R.string.msg_configuration_backup_invalid_metadata
+            )
+        }
+    }
+
+    private fun formatBackupManagerError(error: HBackupManager.BackupManagerError): String {
+        return when (error) {
+            is HBackupManager.BackupManagerError.UnsupportedPreferenceValue -> getString(
+                R.string.msg_configuration_backup_unsupported_preference_value, error.key
+            )
+
+            is HBackupManager.BackupManagerError.UnsupportedPreferenceType -> getString(
+                R.string.msg_configuration_backup_unsupported_preference_type, error.key, error.type
+            )
+        }
+    }
+
+    private fun showRestoreFailure(error: Throwable) {
+        HLog.e(error)
+        val message = when (error) {
+            is HBackupArchive.BackupArchiveException ->
+                formatBackupArchiveError(error.error)
+
+            is HBackupManager.HBackupException ->
+                formatBackupManagerError(error.error)
+
+            is HBackupValidator.BackupValidationException ->
+                error.errors.joinToString("\n") {
+                    formatBackupValidationError(it)
+                }
+
+            is IllegalArgumentException ->
+                error.message?.takeIf { it.isNotBlank() }
+                    ?: getString(R.string.operation_failed)
+
+            else ->
+                getString(R.string.operation_failed)
+        }
+        MaterialAlertDialogBuilder(requireActivity())
+            .setTitle(R.string.operation_failed)
+            .setMessage(message)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
+    private fun formatBackupValidationError(error: HBackupValidator.BackupValidationError): String {
+        return when (error) {
+            is HBackupValidator.BackupValidationError.UnsupportedBackupFormat -> getString(
+                R.string.msg_configuration_backup_unsupported_format, error.format
+            )
+
+            is HBackupValidator.BackupValidationError.UnsupportedConfigurationVersion -> getString(
+                R.string.msg_configuration_backup_unsupported_configuration_version, error.version
+            )
+
+            is HBackupValidator.BackupValidationError.UnsupportedWorkingMode -> getString(
+                R.string.msg_configuration_backup_unsupported_working_mode, error.workingMode
+            )
+
+            HBackupValidator.BackupValidationError.InvalidPreferences -> getString(
+                R.string.msg_configuration_backup_invalid_preferences
+            )
+
+            is HBackupValidator.BackupValidationError.PreferenceInvalidEntry -> getString(
+                R.string.msg_configuration_backup_invalid_preference_entry, error.key
+            )
+
+            is HBackupValidator.BackupValidationError.PreferenceUnsupportedType -> getString(
+                R.string.msg_configuration_backup_unsupported_preference_type, error.key, error.type
+            )
+
+            is HBackupValidator.BackupValidationError.PreferenceMissingValue -> getString(
+                R.string.msg_configuration_backup_missing_preference_value, error.key
+            )
+
+            is HBackupValidator.BackupValidationError.PreferenceInvalidValue -> getString(
+                R.string.msg_configuration_backup_invalid_preference_value, error.key, error.type
+            )
+
+            is HBackupValidator.BackupValidationError.ApplicationCountMismatch -> getString(
+                R.string.msg_configuration_backup_application_count_mismatch, error.expected, error.actual
+            )
+
+            is HBackupValidator.BackupValidationError.ApplicationMissingPackage -> getString(
+                R.string.msg_configuration_backup_application_missing_package, error.index
+            )
+
+            is HBackupValidator.BackupValidationError.DuplicateApplicationPackage -> getString(
+                R.string.msg_configuration_backup_application_duplicate_package, error.packageName
+            )
+
+            is HBackupValidator.BackupValidationError.ApplicationInvalidPinned -> getString(
+                R.string.msg_configuration_backup_application_invalid_pinned, error.index
+            )
+
+            is HBackupValidator.BackupValidationError.ApplicationInvalidWhitelisted -> getString(
+                R.string.msg_configuration_backup_application_invalid_whitelisted, error.index
+            )
+
+            is HBackupValidator.BackupValidationError.ApplicationInvalidTagId -> getString(
+                R.string.msg_configuration_backup_application_invalid_tag_id, error.index, error.tagIndex
+            )
+
+            is HBackupValidator.BackupValidationError.ApplicationUnknownTagId -> getString(
+                R.string.msg_configuration_backup_application_unknown_tag_id, error.index, error.tagId
+            )
+
+            is HBackupValidator.BackupValidationError.ApplicationInvalidLegacyTagId -> getString(
+                R.string.msg_configuration_backup_application_invalid_legacy_tag_id, error.index
+            )
+
+            HBackupValidator.BackupValidationError.InvalidApplicationData -> getString(
+                R.string.msg_configuration_backup_invalid_application_data
+            )
+
+            is HBackupValidator.BackupValidationError.TagCountMismatch -> getString(
+                R.string.msg_configuration_backup_tag_count_mismatch, error.expected, error.actual
+            )
+
+            is HBackupValidator.BackupValidationError.TagIncomplete -> getString(
+                R.string.msg_configuration_backup_tag_incomplete, error.index
+            )
+
+            is HBackupValidator.BackupValidationError.TagInvalidId -> getString(
+                R.string.msg_configuration_backup_tag_invalid_id, error.index
+            )
+
+            is HBackupValidator.BackupValidationError.DuplicateTagId -> getString(
+                R.string.msg_configuration_backup_duplicate_tag_id, error.tagId
+            )
+
+            is HBackupValidator.BackupValidationError.TagInvalidMode -> getString(
+                R.string.msg_configuration_backup_tag_invalid_mode, error.index, error.mode
+            )
+
+            HBackupValidator.BackupValidationError.InvalidTagData -> getString(
+                R.string.msg_configuration_backup_invalid_tag_data
+            )
+        }
+    }
+
+    @Suppress("InlinedApi")
+    // Settings.Global.DEVICE_NAME requires API 25+, so fallback to model on 23+
+    private fun configurationDeviceName(): String =
+        Settings.Global.getString(requireContext().contentResolver, Settings.Global.DEVICE_NAME)
+            ?.takeIf { it.isNotBlank() } ?: Build.MODEL
+
+    private fun configurationBackupFileName(): String {
+        val deviceName = configurationDeviceName()
+        val date = SimpleDateFormat("yyyy-MM-dd--HH-mm", Locale.US).format(java.util.Date())
+        return "$deviceName--$date${HBackupConstants.FILE_EXTENSION}"
+    }
+
+    private fun workingModeLabel(value: String): String {
+        val index = HailData.WORKING_MODE_VALUES.indexOf(value)
+        return if (index >= 0) {
+            resources.getStringArray(R.array.working_mode_entries)[index]
+        } else {
+            value
+        }
     }
 
     fun onWorkingModeChange(rememberState: MutableState<String>, mode: String): Boolean {
