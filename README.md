@@ -1,100 +1,92 @@
-English | [简体中文](README.zh_CN.md) | [日本語](README.ja.md)
-
-# Hail 雹
+# 雹 Hail
 
 [![Android CI status](https://github.com/aistra0528/Hail/workflows/Android%20CI/badge.svg)](https://github.com/aistra0528/Hail/actions)
-[![Translation status](https://hosted.weblate.org/widgets/hail/-/svg-badge.svg)](https://hosted.weblate.org/engage/hail/)
+[![翻译状态](https://hosted.weblate.org/widgets/hail/-/svg-badge.svg)](https://hosted.weblate.org/engage/hail/)
 [![Downloads](https://img.shields.io/github/downloads/aistra0528/Hail/total.svg)](https://github.com/aistra0528/Hail/releases)
 [![License](https://img.shields.io/github/license/aistra0528/Hail)](LICENSE)
 
-Hail is a free-as-in-freedom software to freeze Android
-apps. [GitHub Releases](https://github.com/aistra0528/Hail/releases)
+雹是一款用于冻结 Android 应用的自由软件。[GitHub Releases](https://github.com/aistra0528/Hail/releases)
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/com.aistra.hail/)
 
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="32%" /> <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="32%" /> <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="32%" />
+<img src="fastlane/metadata/android/zh-CN/images/phoneScreenshots/1.png" width="32%" /> <img src="fastlane/metadata/android/zh-CN/images/phoneScreenshots/2.png" width="32%" /> <img src="fastlane/metadata/android/zh-CN/images/phoneScreenshots/3.png" width="32%" />
 
-## Freeze
+## 冻结
 
-Freeze is a word that describes the action of **blocking (immediately stopping) apps when they are not needed/in-use (
-on-demand request)** which in turn helps the device to cut down on the usage of RAM and save power. Users can also
-unfreeze them to revert to their original state.
+冻结`freeze`是一个营销用语，用于描述使**应用在用户不需要时不可运行**
+的行为，以此控制设备使用、减少内存占用和节省电量。用户可在需要时解冻`unfreeze`应用。
 
-In general, "freeze" means disable, but also Hail can "freeze" apps by hiding and suspending them.
+在一般情况下，“冻结”是指停用，此外雹也可以通过隐藏和暂停来“冻结”应用。
 
-### Disable
+### 停用
 
-Disabled apps will not be shown in the launcher and will be shown as "Disabled" in the installed apps list. Enable them
-to revert the action.
+被停用`disable`的应用不会出现在启动器中。在已安装应用列表中会显示已停用`disabled`状态。启用`enable`应用即可恢复。
 
-### Hide
+### 隐藏
 
-Hidden apps will not be shown in the launcher and in the installed apps list. Unhide them to revert the action.
+被隐藏`hide`的应用不会出现在启动器和已安装应用列表中。取消隐藏`unhide`应用即可恢复。
 
-> While in this state, which is almost like an uninstalled state, the package will be unavailable, however, the
-> application data and the actual package file will not be removed from the device.
+> 在这种状态下，软件包几乎处于卸载状态，无法使用，但并没有删除数据或实际的软件包文件。
 
-### Suspend (Android 7.0+)
+### 暂停 (Android 7.0+)
 
-Suspended apps will have their icons shown in grayscale within the device's launcher. Unsuspend them to revert the
-action.
+被暂停`suspend`的应用在启动器中会显示为灰度图标。取消暂停`unsuspend`应用即可恢复。
 
-> While in this state, the application's notifications will be hidden, any of its started activities will be stopped and
-> it will not be able to show toasts, dialogs or even play audio. When the user tries to launch a suspended app, the
-> system will, instead, show a dialog to the user informing them that they cannot use this app while it is suspended.
+> 在这种状态下，应用程序的通知将被隐藏，任何启动活动将被停止，不能弹出提示、对话框或播放音频。
+> 当用户试图启动一个暂停的应用程序时，系统将向用户显示一个对话框，告知他们在暂停状态下不能使用这个应用程序。
 
-Suspend only prevents the user from interacting with the app, it does **NOT** prevent the app from running in the
-background.
+暂停只会阻止用户与应用交互，而**不会**阻止应用在后台运行。
 
-## Working mode
+## 工作模式
 
-**Any app that has been frozen on Hail will need to be unfrozen by the same working mode.**
+**冻结的应用需要通过相同工作模式解冻。**
 
-1. For devices supporting wireless debugging (Android 11+) or rooted devices, `Shizuku` is recommended.
+1. 如果您的设备支持无线调试 (Android 11+) 或已 root，推荐选择`Shizuku`。
 
-2. For rooted devices, `Root` is an alternative. **It is slower.**
+2. 如果您的设备已 root，可选择`Root`。**此模式速度相对较慢。**
 
-| Privilege                                                                                         | Force Stop | Disable | Hide | Suspend | Uninstall/Reinstall (System Apps) |
-|---------------------------------------------------------------------------------------------------|------------|---------|------|---------|-----------------------------------|
-| Root                                                                                              | ✓          | ✓       | ✓    | ✓       | ✓                                 |
-| Device Owner                                                                                      | ✗          | ✗       | ✓    | ✓       | ✗                                 |
-| Privileged System App                                                                             | ✓          | ✓       | ✗    | ✗       | ✗                                 |
-| [Shizuku](https://github.com/RikkaApps/Shizuku) (root)/[Sui](https://github.com/RikkaApps/Sui)    | ✓          | ✓       | ✓    | ✓       | ✓                                 |
-| [Shizuku](https://github.com/RikkaApps/Shizuku) (adb)                                             | ✓          | ✓       | ✗    | ✓       | ✓                                 |
-| [Dhizuku](https://github.com/iamr0s/Dhizuku)                                                      | ✗          | ✗       | ✓    | ✓       | ✗                                 |
-| [Island](https://github.com/oasisfeng/island)/[Insular](https://gitlab.com/secure-system/Insular) | ✗          | ✗       | ✓    | ✓       | ✗                                 |
+| 授权方式                                                                                           | 强行停止 | 停用 | 隐藏 | 暂停 | 卸载/重新安装（系统应用） |
+|------------------------------------------------------------------------------------------------|------|----|----|----|---------------|
+| Root                                                                                           | ✓    | ✓  | ✓  | ✓  | ✓             |
+| 设备所有者                                                                                          | ✗    | ✗  | ✓  | ✓  | ✗             |
+| 特权系统应用                                                                                         | ✓    | ✓  | ✗  | ✗  | ✗             |
+| [Shizuku](https://github.com/RikkaApps/Shizuku) (root)/[Sui](https://github.com/RikkaApps/Sui) | ✓    | ✓  | ✓  | ✓  | ✓             |
+| [Shizuku](https://github.com/RikkaApps/Shizuku) (adb)                                          | ✓    | ✓  | ✗  | ✓  | ✓             |
+| [Dhizuku](https://github.com/iamr0s/Dhizuku)                                                   | ✗    | ✗  | ✓  | ✓  | ✗             |
+| [炼妖壶](https://github.com/oasisfeng/island)/[Insular](https://gitlab.com/secure-system/Insular) | ✗    | ✗  | ✓  | ✓  | ✗             |
 
-### Device Owner
+### 设备所有者
 
-**You must remove Hail as a device owner before you can uninstall it**
+**设置为设备所有者的应用需要移除设备所有者后方可卸载。**
 
-#### Set device owner by adb
+#### 通过 adb 将雹设置为设备所有者
 
-[Android Debug Bridge (adb) Guide](https://developer.android.com/studio/command-line/adb)
+[Android 调试桥 (adb) 指南](https://developer.android.google.cn/studio/command-line/adb)
 
-[Download Android SDK Platform-Tools](https://developer.android.com/studio/releases/platform-tools)
+[下载 Android SDK 平台工具](https://developer.android.google.cn/studio/releases/platform-tools)
 
-Issue adb command:
+通过 adb 发出命令：
 
 ```shell
 adb shell dpm set-device-owner com.aistra.hail/.receiver.DeviceAdminReceiver
 ```
 
-In response, adb prints this message if device owner has been successfully set:
+设置成功后会输出以下信息：
 
 ```
-Success: Device owner set to package com.aistra.hail. Active admin set to component {com.aistra.hail/com.aistra.hail.receiver.DeviceAdminReceiver}
+Success: Device owner set to package com.aistra.hail
+Active admin set to component {com.aistra.hail/com.aistra.hail.receiver.DeviceAdminReceiver}
 ```
 
-Search the message by search engine otherwise.
+如输出其他信息，请使用搜索引擎自行查阅与解决。
 
-#### Remove device owner
+#### 移除雹的设备所有者
 
-Settings > Remove Device Owner
+设置 > 移除设备所有者
 
-### Privileged System App
+### 特权系统应用
 
-The following privapp-permissions is required:
+需要设置特许权限许可名单：
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -108,9 +100,9 @@ The following privapp-permissions is required:
 </permissions>
 ```
 
-To use this mode, you should install Hail as a privileged system app.
+并将雹安装为特权系统应用。
 
-The recommended approach is to import Hail when building your ROM, here's an example for `Android.bp`:
+推荐方法是在构建 ROM 时导入雹，`Android.bp`配置示例：
 
 ```bp
 android_app_import {
@@ -134,35 +126,34 @@ prebuilt_etc {
 }
 ```
 
-## Revert
+## 恢复
 
-### By adb
+### 通过 adb
 
-Replace com.package.name to the package name of target app.
+替换 com.package.name 为目标应用的包名。
 
 ```shell
-# Enable app
+# 启用应用
 adb shell pm enable com.package.name
-# Unhide app (root required)
+# 取消隐藏应用 (需要 root)
 adb shell su -c pm unhide com.package.name
-# Unsuspend app
+# 取消暂停应用
 adb shell pm unsuspend com.package.name
 ```
 
-### Modify file
+### 修改文件
 
-Access `/data/system/users/0/package-restrictions.xml`, this file stores the restrictions about apps. You can modify,
-rename or just delete it.
+访问`/data/system/users/0/package-restrictions.xml`，此文件存储了应用限制相关信息。您可修改、重命名或直接删除此文件。
 
-- Enable app: Modify the value of `enabled` from 2 (DISABLED) or 3 (DISABLED_USER) to 1 (ENABLED)
+- 启用应用：修改`enabled`属性为 2 (DISABLED) 或 3 (DISABLED_USER) 的值为 1 (ENABLED)
 
-- Unhide app: Modify the value of `hidden` from true to false
+- 取消隐藏应用：修改`hidden`属性为 true 的值为 false
 
-- Unsuspend app: Modify the value of `suspended` from true to false
+- 取消暂停应用：修改`suspended`属性为 true 的值为 false
 
-### Wipe data by recovery
+### 通过恢复模式清除数据 (wipe data)
 
-**None of my business :(**
+**希望您能谨慎地选择冻结应用，以免陷入此窘境。**
 
 ## API
 
@@ -170,35 +161,33 @@ rename or just delete it.
 adb shell am start -a action -e key value
 ```
 
-`action` can be one of the following constants:
+`action`可为：
 
-- `com.aistra.hail.action.LAUNCH`: Unfreeze and launch target app. If it is unfrozen, it will launch directly.
-  `key="package"` `value="com.package.name"`
+- `com.aistra.hail.action.LAUNCH`：解冻并启动目标应用。应用未冻结时会直接启动。`key="package"` `value="com.package.name"`
 
-- `com.aistra.hail.action.FREEZE`: Freeze target app. It must be checked at Home. `key="package"`
-  `value="com.package.name"`
+- `com.aistra.hail.action.FREEZE`：冻结目标应用。应用需处于首页。`key="package"` `value="com.package.name"`
 
-- `com.aistra.hail.action.UNFREEZE`: Unfreeze target app. `key="package"` `value="com.package.name"`
+- `com.aistra.hail.action.UNFREEZE`：解冻目标应用。`key="package"` `value="com.package.name"`
 
-- `com.aistra.hail.action.FREEZE_TAG`: Freeze all non-whitelisted apps in the target tag. `key="tag"` `value="Tag name"`.
-  An optional one-shot mode override is supported: `key="mode"` `value="dhizuku_suspend"` (must be a working mode other than default).
+- `com.aistra.hail.action.FREEZE_TAG`：冻结目标标签中的全部非白名单应用。`key="tag"` `value="标签名"`。
+  支持可选的一次性模式覆盖：`key="mode"` `value="dhizuku_suspend"`（须为除 default 外的工作模式）。
 
-- `com.aistra.hail.action.UNFREEZE_TAG`: Unfreeze all apps in the target tag. `key="tag"` `value="Tag name"`.
-  An optional one-shot mode override is supported (same `key="mode"` rule as above).
+- `com.aistra.hail.action.UNFREEZE_TAG`：解冻目标标签中的全部应用。`key="tag"` `value="标签名"`。
+  同样支持一次性模式覆盖（`key="mode"` 规则同上）。
 
-- `com.aistra.hail.action.FREEZE_ALL`: Freeze all apps at Home. `extra` is not necessary.
+- `com.aistra.hail.action.FREEZE_ALL`：冻结首页全部应用。无需`extra`。
 
-- `com.aistra.hail.action.UNFREEZE_ALL`: Unfreeze all apps at Home. `extra` is not necessary.
+- `com.aistra.hail.action.UNFREEZE_ALL`：解冻首页全部应用。无需`extra`。
 
-- `com.aistra.hail.action.FREEZE_NON_WHITELISTED`: Freeze all non-whitelisted apps at Home. `extra` is not necessary.
+- `com.aistra.hail.action.FREEZE_NON_WHITELISTED`：冻结首页全部非白名单应用。无需`extra`。
 
-- `com.aistra.hail.action.FREEZE_AUTO`: Auto freeze apps at Home. `extra` is not necessary.
+- `com.aistra.hail.action.FREEZE_AUTO`：自动冻结首页应用。无需`extra`。
 
-- `com.aistra.hail.action.LOCK`: Lock screen. `extra` is not necessary.
+- `com.aistra.hail.action.LOCK`：锁定屏幕。无需`extra`。
 
-- `com.aistra.hail.action.LOCK_FREEZE`: Freeze all apps at Home and lock screen. `extra` is not necessary.
+- `com.aistra.hail.action.LOCK_FREEZE`：冻结首页全部应用并锁定屏幕。无需`extra`。
 
-or use following `schema`:
+或使用以下`schema`:
 
 - `hail://launch?package=xxx`
 
@@ -208,11 +197,11 @@ or use following `schema`:
 
 - `hail://freeze_tag?tag=xxx`
 
-- `hail://freeze_tag?tag=xxx&mode=xxx` (one-shot mode override)
+- `hail://freeze_tag?tag=xxx&mode=xxx`（一次性模式覆盖）
 
 - `hail://unfreeze_tag?tag=xxx`
 
-- `hail://unfreeze_tag?tag=xxx&mode=xxx` (one-shot mode override)
+- `hail://unfreeze_tag?tag=xxx&mode=xxx`（一次性模式覆盖）
 
 - `hail://freeze_all`
 
@@ -226,25 +215,29 @@ or use following `schema`:
 
 - `hail://lock_freeze`
 
-### Per-tag working mode (fork extension)
+### 分组冻结模式（fork 扩展）
 
-Each tag can have its own working mode (Settings > Per-tag working mode); unset tags follow the global working mode.
-All freeze/unfreeze entry points (single-app actions, `FREEZE_TAG`, `FREEZE_ALL` / `UNFREEZE_ALL`, the Home FAB and
-menus, multi-select, auto freeze, deferred tasks, launching) resolve the mode per app from its tags; the global
-working mode is only the fallback for tags without an explicit mode.
+每个分组可在「设置 > 分组冻结模式」中配置独立的工作模式；未设置的分组跟随全局工作模式。
+所有冻结/解冻入口（单应用操作、`FREEZE_TAG`、`FREEZE_ALL` / `UNFREEZE_ALL`、首页 FAB 与菜单、
+多选、自动冻结、延迟任务、启动应用）都按各应用所属分组逐个解析模式；全局工作模式仅作为未配置分组的
+默认 fallback。
 
-Known limitation: unfreezing only ever uses the specified mode (no cross-mode fallback), so apps frozen via a
-one-shot `mode` override that matches neither their tag mode nor the global mode must be unfrozen with the same
-override.
+已知限制：解冻只走指定模式（无跨模式兜底），因此用一次性 `mode` 覆盖冻上的、且与分组模式/全局都对不上的
+应用，需用同样的覆盖参数解冻。
 
-## Help Translate
+### 冻结后杀进程（fork 扩展）
 
-To translate Hail into your language, or to improve an existing translation,
-use [Weblate](https://hosted.weblate.org/engage/hail/).
+冻结成功后（`stop` 类本来就是杀、Island 跳过），Hail 会静默补杀该应用进程，不留残留。
+通道顺序：Dhizuku（仅 `dhizuku_*` 模式，在 Dhizuku 服务端进程里执行 `am force-stop`）→ Shizuku → ROOT。
+失败静默忽略：不返回结果、不弹任何提示。
 
-[![Translation status](https://hosted.weblate.org/widgets/hail/-/multi-auto.svg)](https://hosted.weblate.org/engage/hail/)
+## 协助翻译
 
-## License
+要将雹翻译成您的语言，或完善现有的翻译，请使用 [Weblate](https://hosted.weblate.org/engage/hail/)。
+
+[![翻译状态](https://hosted.weblate.org/widgets/hail/-/multi-auto.svg)](https://hosted.weblate.org/engage/hail/)
+
+## 许可证
 
     Hail - Freeze Android apps
     Copyright (C) 2021-2026 Aistra
